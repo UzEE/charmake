@@ -1,0 +1,21 @@
+{
+  "name": "node-batch-rename",
+  "version": "0.0.1",
+  "description": "A simple utility to batch rename files using a specific logic.",
+  "main": "index.js",
+  "bin": {
+    "rev-name": "./bin/rev-name.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "rename",
+    "reverse",
+    "name",
+    "batch",
+    "rename"
+  ],
+  "author": "Uzair Sajid <uzee@uzeeinc.net>",
+  "license": "MIT"
+}

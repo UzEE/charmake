@@ -1,0 +1,14 @@
+{
+    "rules": {
+        "quotemark": [
+            "single"
+        ],
+        "indent": [
+            true
+        ],
+        "no-trailing-whitespace": true,
+        "whitespace": [
+            true
+        ]
+    }
+}

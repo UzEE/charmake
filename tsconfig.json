@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "target": "ES6",
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "outDir": "bin/"
+    },
+    "exclude": [
+        "node_modules",
+        "data",
+        "backup",
+        "typings",
+        "bin"
+    ]
+}

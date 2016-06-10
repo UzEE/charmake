@@ -1,0 +1,13 @@
+node_modules/
+bower_components/
+coverage/
+.sass-cache/
+.idea/
+.tmp/
+.vscode/
+typings/
+bin/
+dist/
+dev/
+data/
+backup/

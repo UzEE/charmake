@@ -4,6 +4,8 @@
     "yargs": "registry:npm/yargs#3.31.0+20160316010718"
   },
   "globalDependencies": {
+    "async": "registry:dt/async#1.4.2+20160602152629",
+    "gm": "registry:dt/gm#0.0.0+20160328142802",
     "node": "registry:dt/node#6.0.0+20160602155235"
   }
 }

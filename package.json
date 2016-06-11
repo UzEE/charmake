@@ -17,5 +17,11 @@
     "rename"
   ],
   "author": "Uzair Sajid <uzee@uzeeinc.net>",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "async": "^2.0.0-rc.6",
+    "gm": "^1.22.0",
+    "pad-left": "^2.1.0",
+    "yargs": "^4.7.0"
+  }
 }

@@ -12,30 +12,38 @@ interface IFileDictionaryItem {
 
 interface IFileDictionary {
   [index: number]: IFileDictionaryItem;
-};
+}
 
 import * as yargs from 'yargs';
 import * as path from 'path';
 import * as fs from 'fs';
+import * as gm from 'gm';
+import * as async from 'async';
 
-import pad = require('pad-left');
+import { Processor, ICharacterSequence } from './lib/processor';
 
 let argv = yargs
   .usage('$0 <cmd> [args]')
   .help('help')
   .option('input-dir', {
+
     alias: 'i',
     demand: true,
     type: 'string',
     describe: 'Path to the Directory containing the files to rename'
-  })
-  .option('output-dir', {
+
+  }).option('output-dir', {
     alias: 'o',
     type: 'string',
     describe: 'Path to the Directory to output the renamed files',
     default: null
-  })
-  .argv;
+
+  }).option('verbose', {
+    type: 'boolean',
+    describe: 'Print output to stdout',
+    default: true
+
+  }).argv;
 
 const input = path.normalize(argv['i']);
 const output = argv['o'] ? path.normalize(argv['o']) : input;
@@ -47,7 +55,77 @@ let dictionary: IFileDictionary = {};
 let max: number = 0;
 let indexStrLength: number;
 
-fs.readdir(input, (err, files) => {
+/**
+ * A helper function to write to stdout
+ */
+let consoleLog = (...args) => {
+
+  if (argv['verbose']) {
+    console.log.apply(this, args);
+  }
+};
+
+// begin the process
+async.waterfall([
+
+  // filter all top level directories first
+  (cb: AsyncResultArrayCallback<string>) => {
+
+    fs.readdir(input, (err, files) => {
+
+      if (err) {
+
+        cb(err, null);
+        return;
+      }
+
+      files = files.filter(file => {
+        return fs.statSync(path.resolve(process.cwd(), input, file)).isDirectory();
+      });
+
+      consoleLog(files);
+
+      cb(null, files);
+      return;
+    });
+  },
+
+  // process each animation directory
+  async (directories: Array<string>, cb: AsyncResultArrayCallback<string>) => {
+
+    let chars: { [character: string]: ICharacterSequence } = {};
+
+    for (let i = 0, len = directories.length; i < len; i++) {
+
+      try {
+        let char = await Processor.BuildCharacterSequenceAsync(path.join(input, directories[i]));
+        chars[char.name] = char;
+      }
+
+      catch (err) {
+
+        cb(err, null);
+        return;
+      }
+    }
+
+    cb(null, directories);
+  }
+
+], (err, results) => {
+
+  if (err) {
+
+    consoleLog(err);
+    process.exit(1);
+    return;
+  }
+
+  process.exit(0);
+  return;
+});
+
+/*fs.readdir(input, (err, files) => {
 
   if (err) {
     console.error(err);
@@ -124,3 +202,4 @@ fs.readdir(input, (err, files) => {
 });
 
 
+*/

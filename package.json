@@ -4,7 +4,7 @@
   "description": "A simple utility to batch rename files using a specific logic.",
   "main": "index.js",
   "bin": {
-    "rev-name": "./bin/rev-name.js"
+    "charmake": "./bin/index.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -16,7 +16,7 @@
     "batch",
     "rename"
   ],
-  "author": "Uzair Sajid <uzee@uzeeinc.net>",
+  "author": "Uzair Sajid <uzee@uzeeinc.net> (http://uzairsajid.com)",
   "license": "MIT",
   "dependencies": {
     "async": "^2.0.0-rc.6",

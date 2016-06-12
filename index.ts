@@ -181,6 +181,7 @@ async.waterfall([
 
           let anim = gm()
             .in('-dispose', 'none')
+            .in('-geometry', size)
             .in(design)
             .in('-dispose', 'previous')
             .in('-delay', '1')

@@ -17,6 +17,7 @@ interface IFileDictionary {
 import * as yargs from 'yargs';
 import * as path from 'path';
 import * as fs from 'fs';
+import * as util from 'util';
 import * as gm from 'gm';
 import * as async from 'async';
 
@@ -25,6 +26,7 @@ import { Processor, ICharacterSequence } from './lib/processor';
 let argv = yargs
   .usage('$0 <cmd> [args]')
   .help('help')
+  .wrap(null)
   .option('input-dir', {
 
     alias: 'i',
@@ -38,22 +40,40 @@ let argv = yargs
     describe: 'Path to the Directory to output the renamed files',
     default: null
 
+  }).option('width', {
+    alias: 'w',
+    type: 'number',
+    describe: 'Width of the output in pixels.',
+    default: null,
+    defaultDescription: 'Will default to the size of `design.png` if omitted.'
+
+  }).option('height', {
+    alias: 'h',
+    type: 'number',
+    describe: 'Height of the output in pixels.',
+    default: null,
+    defaultDescription: 'If --width is given, it\'s value will be used for --height as well, resulting in a square image. Otherwise, size of `design.png` will be used.'
+
+  }).option('size', {
+    alias: 's',
+    type: 'string',
+    describe: 'Output dimensions of the format <width>x<height> (e.g 512x512). This value will take precedence over --width and --height if given.',
+    default: null,
+    defaultDescription: 'Defaults to the size of `design.png` if ommited.'
+
   }).option('verbose', {
     type: 'boolean',
     describe: 'Print output to stdout',
-    default: true
+    default: false
 
   }).argv;
 
 const input = path.normalize(argv['i']);
 const output = argv['o'] ? path.normalize(argv['o']) : input;
 
-const nameRegEx = /^([a-z]+)([0-9]+)(\.[a-z]+)$/i;
-
-let dictionary: IFileDictionary = {};
-
-let max: number = 0;
-let indexStrLength: number;
+interface ICharacterSequenceMap {
+  [character: string]: ICharacterSequence;
+}
 
 /**
  * A helper function to write to stdout
@@ -91,7 +111,7 @@ async.waterfall([
   },
 
   // process each animation directory
-  async (directories: Array<string>, cb: AsyncResultArrayCallback<string>) => {
+  async (directories: Array<string>, cb: AsyncResultObjectCallback<ICharacterSequence>) => {
 
     let chars: { [character: string]: ICharacterSequence } = {};
 
@@ -109,7 +129,81 @@ async.waterfall([
       }
     }
 
-    cb(null, directories);
+    cb(null, chars);
+  },
+
+  // make gifs for each character
+  (chars: Dictionary<ICharacterSequence>, cb: AsyncResultObjectCallback<ICharacterSequence>) => {
+
+    let count = 0;
+
+    let width = parseInt(argv['width']) || null;
+    let height = parseInt(argv['height']) || width;
+
+    let size = argv['size'] || util.format('%dx%d', width, height);
+
+    for (let char in chars) {
+
+      let outname = path.join(input, char + '.gif');
+      let out = fs.createWriteStream(outname);
+
+      let design = path.join(input, char, chars[char].designFile);
+
+      consoleLog('Creating %s', outname);
+
+      async.waterfall([
+
+        (cb) => {
+
+          if (!size || size === '0x0') {
+
+            gm(design)
+              .size((err, dim) => {
+
+                if (err) {
+
+                  cb(err);
+                  return;
+                }
+
+                size = util.format('%dx%d', dim.width, dim.height);
+                cb(null, size);
+              });
+
+          } else {
+            cb(null, size);
+          }
+        },
+
+        (size: string, cb) => {
+
+          consoleLog('Using size: %s', size);
+
+          let anim = gm()
+            .in('-dispose', 'none')
+            .in(design)
+            .in('-dispose', 'previous')
+            .in('-delay', '1')
+            .in('-loop', '0')
+            .in('-geometry', size)
+            .in(path.join(input, char, chars[char].pattern));
+
+          /*for (let seq of chars[char].sequenceFiles) {
+            anim = anim.in(path.join(input, char, seq));
+          }*/
+
+          anim.stream('gif')
+            .pipe(out);
+
+          cb(null, null);
+        }
+      ], (err, result) => {
+
+        if (++count >= Object.keys(chars).length) {
+          cb(null, chars);
+        }
+      });
+    }
   }
 
 ], (err, results) => {
@@ -117,89 +211,9 @@ async.waterfall([
   if (err) {
 
     consoleLog(err);
-    process.exit(1);
     return;
   }
 
-  process.exit(0);
+  consoleLog('Finishing generation of GIF files...');
   return;
 });
-
-/*fs.readdir(input, (err, files) => {
-
-  if (err) {
-    console.error(err);
-    return;
-  }
-
-  console.log('Total files found: %d', files.length);
-
-  files.forEach((file, i) => {
-
-    let result = file.match(nameRegEx);
-    let [filename, name, index, ext] = result;
-    let numIndex: number = parseInt(index);
-
-    max = Math.max(max, numIndex);
-    indexStrLength = index.length;
-
-    dictionary[numIndex] = {
-
-      filename: filename,
-      name: name,
-      index: numIndex,
-      extension: ext
-    };
-
-    console.log('File: %s [Name: %s, Index: %d, Extension: %s]', filename, name, index, ext);
-  });
-
-  if (max + 1 !== files.length) {
-
-    console.error('File indexes don\'t match the total number of files.\nMax Index: %d, Total Files: %d', max + 1, files.length);
-    process.exit(2);
-  }
-
-  let indexes = Object.keys(dictionary).map<number>(i => parseInt(i)).sort((a, b) => { return b - a });
-
-  let getName = (item: IFileDictionaryItem, index: number) => {
-    return [item.filename, item.name + pad(index.toString(), indexStrLength, '0') + item.extension];
-  };
-
-  console.log('Startig to rename...');
-
-  for (let i = 0; i <= max / 2; i++) {
-
-    let file = dictionary[indexes[i]];
-    let [first_filename, first_newName] = getName(file, i);
-
-    file = dictionary[indexes[indexes.length - 1 - i]];
-    let [second_filename, second_newName] = getName(file, indexes.length - 1 - i);
-
-    let temp_newName = first_newName + '.bak';
-
-    fs.renameSync(path.join(input, first_filename), path.join(output, temp_newName));
-    fs.renameSync(path.join(input, second_filename), path.join(output, second_newName));
-    fs.renameSync(path.join(input, temp_newName), path.join(output, first_newName));
-
-    if (i + 1 >= max / 2) {
-
-      if (max % 2) {
-
-        file = dictionary[indexes[i + 1]];
-        [first_filename, first_newName] = getName(file, i + 1);
-
-        fs.renameSync(path.join(input, first_filename), path.join(output, first_newName));
-        break;
-
-      } else {
-        break;
-      }
-
-    }
-  }
-
-});
-
-
-*/

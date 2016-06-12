@@ -9,6 +9,7 @@ import pad = require('pad-left');
 export interface ICharacterSequence {
 
   name: string;
+  pattern: string;
   designFile: string;
   sequenceFiles: Array<string>;
 }
@@ -78,8 +79,12 @@ export class Processor {
       Promise.all([designExists, sequenceExists])
         .then(result => {
 
+          let res = path.basename(result[1][0]).match(Processor.SequencePattern);
+          let [filename, name, index, ext] = res;
+
           resolve({
             name: path.basename(directory),
+            pattern: name + '*' + ext,
             designFile: result[0] ? 'design.png' : null,
             sequenceFiles: result[1]
           });

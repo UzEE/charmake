@@ -1,7 +1,7 @@
 {
-  "name": "node-batch-rename",
+  "name": "charmake",
   "version": "0.0.1",
-  "description": "A simple utility to batch rename files using a specific logic.",
+  "description": "A simple command line utility for generating character GIFs with overlays.",
   "main": "index.js",
   "bin": {
     "charmake": "./bin/index.js"
@@ -10,7 +10,8 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
-    "rename",
+    "gif",
+    "animation",
     "reverse",
     "name",
     "batch",
@@ -23,5 +24,16 @@
     "gm": "^1.22.0",
     "pad-left": "^2.1.0",
     "yargs": "^4.7.0"
-  }
+  },
+  "devDependencies": {
+    "typescript": "^1.8.10"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/UzEE/charmake.git"
+  },
+  "bugs": {
+    "url": "https://github.com/UzEE/charmake/issues"
+  },
+  "homepage": "https://github.com/UzEE/charmake#readme"
 }

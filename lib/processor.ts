@@ -36,15 +36,23 @@ export class Processor {
 
     return new Promise<ICharacterSequence>((resolve, reject) => {
 
-      // check if design.png exists
-      let designExists = new Promise<boolean>((designResolve, designReject) => {
+      // check if design.over.png or design.under.png exists
+      let designExists = new Promise<string>((designResolve, designReject) => {
 
-        fs.exists(path.join(directory, 'design.png'), (exists) => {
+        fs.exists(path.join(directory, 'design.under.png'), (exists) => {
 
           if (exists) {
-            designResolve(true);
+            designResolve('design.under.png');
           } else {
-            designReject(new Error(util.format('Error [%s]: design.png doesn\'t exist', directory)));
+
+            fs.exists(path.join(directory, 'design.over.png'), (exists) => {
+
+              if (exists) {
+                designResolve('design.over.png');
+              } else {
+                designReject(new Error(util.format('Error [%s]: design.over.png or design.under.png doesn\'t exist', directory)));
+              }
+            });
           }
         });
       });
@@ -85,11 +93,13 @@ export class Processor {
           resolve({
             name: path.basename(directory),
             pattern: name + '*' + ext,
-            designFile: result[0] ? 'design.png' : null,
+            designFile: result[0] ? result[0] : null,
             sequenceFiles: result[1]
           });
         })
-        .catch(reason => reject(reason));
+        .catch(reason => {
+          reject(reason);
+        });
     });
   }
 

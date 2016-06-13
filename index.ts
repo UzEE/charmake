@@ -22,7 +22,9 @@ import * as gm from 'gm';
 import * as async from 'async';
 
 import * as updateNotifier from 'update-notifier';
-const pkg = require(path.join(process.cwd(), 'package.json'));
+
+// TODO: Find a more permanent solution to get package.json
+const pkg = require(path.join('..', 'package.json'));
 
 updateNotifier({pkg}).notify();
 

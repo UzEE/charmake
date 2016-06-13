@@ -1,6 +1,6 @@
 {
   "name": "charmake",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A simple command line utility for generating character GIFs with overlays.",
   "main": "index.js",
   "bin": {

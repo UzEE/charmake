@@ -27,6 +27,7 @@
     "async": "^2.0.0-rc.6",
     "gm": "^1.22.0",
     "pad-left": "^2.1.0",
+    "update-notifier": "^1.0.0",
     "yargs": "^4.7.0"
   },
   "devDependencies": {

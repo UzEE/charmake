@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "pad-left": "registry:npm/pad-left#2.0.0+20160211003958",
+    "update-notifier": "registry:npm/update-notifier#0.6.0+20160211003958",
     "yargs": "registry:npm/yargs#3.31.0+20160316010718"
   },
   "globalDependencies": {

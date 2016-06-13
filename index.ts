@@ -21,12 +21,18 @@ import * as util from 'util';
 import * as gm from 'gm';
 import * as async from 'async';
 
+import * as updateNotifier from 'update-notifier';
+const pkg = require(path.join(process.cwd(), 'package.json'));
+
+updateNotifier({pkg}).notify();
+
 import { Processor, ICharacterSequence } from './lib/processor';
 
 let argv = yargs
-  .usage('$0 <cmd> [args]')
+  .usage(util.format('Character Make v%s\n\nUsage: charmake <cmd> [args]', pkg.version))
   .help('help')
   .wrap(null)
+  .version('v' + pkg.version)
   .option('input-dir', {
 
     alias: 'i',

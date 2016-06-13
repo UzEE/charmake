@@ -5,7 +5,7 @@ A simple command line utility for generating character GIFs with overlays.
 
 ## Install
 
-Make sure you have [Node](http://nodejs.org/) and [Graphicsmagick](http://graphicsmagick.org) installed and available in your environment `PATH`. Then:
+Make sure you have [Node](http://nodejs.org/) (v6.2.1 or higher) and [Graphicsmagick](http://graphicsmagick.org) installed and available in your environment `PATH`. Then:
 
 ```bash
 npm install charmake -g

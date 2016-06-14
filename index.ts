@@ -192,25 +192,25 @@ async.waterfall([
           if (design.indexOf('under') > 0) {
 
             anim.in('-dispose', 'none')
-            .in('-geometry', size)
-            .in(design)
-            .in('-dispose', 'previous')
-            .in('-delay', '1')
-            .in('-loop', '0')
-            .in('-geometry', size)
-            .in(path.join(input, char, chars[char].pattern));;
+              .in('-geometry', size)
+              .in(design)
+              .in('-dispose', 'previous')
+              .in('-delay', '1')
+              .in('-loop', '0')
+              .in('-geometry', size)
+              .in(path.join(input, char, chars[char].pattern));;
           }
 
           if (design.indexOf('over') > 0) {
 
             anim.in('-dispose', 'none')
-            .in('-delay', '1')
-            .in('-loop', '0')
-            .in('-geometry', size)
-            .in(path.join(input, char, chars[char].pattern))
-            .in('-dispose', 'background')
-            .in('-geometry', size)
-            .in(design);
+              .in('-delay', '1')
+              .in('-loop', '0')
+              .in('-geometry', size)
+              .in(path.join(input, char, chars[char].pattern))
+              .in('-dispose', 'background')
+              .in('-geometry', size)
+              .in(design);
           }
 
           /*for (let seq of chars[char].sequenceFiles) {

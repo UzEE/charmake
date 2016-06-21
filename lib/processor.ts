@@ -107,6 +107,7 @@ export class Processor {
 
     return new Promise<Array<string>>((resolve, reject) => {
 
+      let min = Number.POSITIVE_INFINITY;
       let max = 0;
       let indexStrLength: number;
 
@@ -120,6 +121,7 @@ export class Processor {
         let [filename, name, index, ext] = result;
         let numIndex: number = parseInt(index);
 
+        min = Math.min(min, numIndex);
         max = Math.max(max, numIndex);
         indexStrLength = index.length;
 
@@ -133,7 +135,7 @@ export class Processor {
 
       });
 
-      if (max + 1 !== files.length) {
+      if ((max - min) + 1 !== files.length) {
 
         reject(new Error(util.format('File indexes don\'t match the total number of files.\nMax Index: %d, Total Files: %d', max + 1, files.length)));
         return;
@@ -142,7 +144,7 @@ export class Processor {
       let indexes = Object.keys(dictionary).map<number>(i => parseInt(i)).sort((a, b) => { return b - a });
 
       let getName = (item: IFileDictionaryItem, index: number) => {
-        return [item.filename, item.name + pad(index.toString(), indexStrLength, '0') + item.extension];
+        return [item.filename, item.name + pad((min + index).toString(), indexStrLength, '0') + item.extension];
       };
 
       let i = 0;

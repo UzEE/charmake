@@ -93,6 +93,13 @@ let consoleLog = (...args) => {
   }
 };
 
+let consoleError = (...args) => {
+
+  if (argv['verbose']) {
+    console.log.apply(this, args);
+  }
+};
+
 // begin the process
 async.waterfall([
 
@@ -213,6 +220,12 @@ async.waterfall([
               .in(design);
           }
 
+          /**
+           * Another command to try
+           * 
+           * gm convert -dispose none -geometry 512x512 -background #fff -extent 0x0 design.under.png -dispose previous -delay 1 -loop 0 -geometry 512x512 -background #fefefe -extent 0x0 -transparent #fefefe backflip*.png test.gif
+           */
+
           /*for (let seq of chars[char].sequenceFiles) {
             anim = anim.in(path.join(input, char, seq));
           }*/
@@ -235,7 +248,7 @@ async.waterfall([
 
   if (err) {
 
-    console.error(err);
+    consoleError(err);
     return;
   }
 

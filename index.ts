@@ -75,10 +75,36 @@ let argv = yargs
     describe: 'Print output to stdout',
     default: false
 
-  }).argv;
+  })
+  .option('processor', {
+    alias: 'p',
+    type: 'string',
+    describe: 'Defines which image processor to use. Valid values are "gm" for GraphicsMagick and "ffmpeg" for FFMPEG.',
+    default: 'ffmpeg',
+    defaultDescription: 'Defaults to using FFMPEG for Gif generation.'
+
+  })
+  .option('ffmpeg', {
+    type: 'boolean',
+    describe: 'Short for using "--processor ffmpeg".',
+    default: true,
+    defaultDescription: 'Defaults to using FFMPEG for Gif generation.'
+
+  })
+  .option('gm', {
+    type: 'boolean',
+    describe: 'Short for using "--processor gm".',
+    default: false,
+    defaultDescription: 'Don\'t use GraphicsMagick by default.'
+
+  })
+  .argv;
 
 const input = path.normalize(argv['i']);
 const output = argv['o'] ? path.normalize(argv['o']) : input;
+
+// determine which Gif processor to use
+const processor = (argv['gm'] || argv['processor'] === 'gm') ? 'gm' : 'ffmpeg';
 
 interface ICharacterSequenceMap {
   [character: string]: ICharacterSequence;
@@ -236,6 +262,8 @@ async.waterfall([
 
             anim.stream('gif')
               .pipe(out);
+
+            cb(null, null);
           }
 
           // ffmpeg pipeline
@@ -312,9 +340,13 @@ async.waterfall([
               .pipe(out);
           };
 
-          // processGM();
+          if (processor === 'gm') {
 
-          processFFMPEG();
+            processGM();
+
+          } else {
+            processFFMPEG();
+          }
 
         }
       ], (err, result) => {

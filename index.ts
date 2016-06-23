@@ -20,6 +20,7 @@ import * as fs from 'fs';
 import * as util from 'util';
 import * as gm from 'gm';
 import * as async from 'async';
+import * as ffmpeg from 'fluent-ffmpeg';
 
 import * as updateNotifier from 'update-notifier';
 
@@ -194,46 +195,127 @@ async.waterfall([
 
           consoleLog('Using size: %s', size);
 
-          let anim = gm();
+          // graphicsmagick pipeline
+          let processGM = () => {
 
-          if (design.indexOf('under') > 0) {
+            let anim = gm();
 
-            anim.in('-dispose', 'none')
-              .in('-geometry', size)
-              .in(design)
-              .in('-dispose', 'previous')
-              .in('-delay', '1')
-              .in('-loop', '0')
-              .in('-geometry', size)
-              .in(path.join(input, char, chars[char].pattern));;
+            if (design.indexOf('under') > 0) {
+
+              anim.in('-dispose', 'none')
+                .in('-geometry', size)
+                .in(design)
+                .in('-dispose', 'previous')
+                .in('-delay', '1')
+                .in('-loop', '0')
+                .in('-geometry', size)
+                .in(path.join(input, char, chars[char].pattern));;
+            }
+
+            if (design.indexOf('over') > 0) {
+
+              anim.in('-dispose', 'none')
+                .in('-delay', '1')
+                .in('-loop', '0')
+                .in('-geometry', size)
+                .in(path.join(input, char, chars[char].pattern))
+                .in('-dispose', 'background')
+                .in('-geometry', size)
+                .in(design);
+            }
+
+            /**
+             * Another command to try
+             *
+             * gm convert -dispose none -geometry 512x512 -background #fff -extent 0x0 design.under.png -dispose previous -delay 1 -loop 0 -geometry 512x512 -background #fefefe -extent 0x0 -transparent #fefefe backflip*.png test.gif
+             */
+
+            /*for (let seq of chars[char].sequenceFiles) {
+              anim = anim.in(path.join(input, char, seq));
+            }*/
+
+            anim.stream('gif')
+              .pipe(out);
           }
 
-          if (design.indexOf('over') > 0) {
+          // ffmpeg pipeline
+          let processFFMPEG = () => {
 
-            anim.in('-dispose', 'none')
-              .in('-delay', '1')
-              .in('-loop', '0')
-              .in('-geometry', size)
-              .in(path.join(input, char, chars[char].pattern))
-              .in('-dispose', 'background')
-              .in('-geometry', size)
-              .in(design);
-          }
+            let anim = new ffmpeg({ logger: console });
+            let overlayInputs: Array<string> = [];
 
-          /**
-           * Another command to try
-           * 
-           * gm convert -dispose none -geometry 512x512 -background #fff -extent 0x0 design.under.png -dispose previous -delay 1 -loop 0 -geometry 512x512 -background #fefefe -extent 0x0 -transparent #fefefe backflip*.png test.gif
-           */
+            if (design.indexOf('under') > 0) {
 
-          /*for (let seq of chars[char].sequenceFiles) {
-            anim = anim.in(path.join(input, char, seq));
-          }*/
+              overlayInputs = ['1:v', 'scaled'];
 
-          anim.stream('gif')
-            .pipe(out);
+            } else {
+              overlayInputs = ['scaled', '1:v']
+            }
 
-          cb(null, null);
+            let filters: Array<FfmpegComplexFilter> = [
+
+              {
+                filter: 'fps',
+                options: 25,
+                outputs: 'fps'
+              },
+
+              {
+                filter: 'scale',
+                options: { w: 512, h: -1, flags: 'lanczos' },
+                inputs: 'fps',
+                outputs: 'scaled'
+              },
+
+              {
+                filter: 'overlay',
+                options: { x: 0, y: 0 },
+                inputs: overlayInputs,
+                outputs: 'overlayed'
+              },
+
+              {
+                filter: 'split',
+                options: '2',
+                inputs: 'overlayed',
+                outputs: ['y1', 'y2']
+              },
+
+              {
+                filter: 'palettegen',
+                options: { stats_mode: 'full' },
+                inputs: 'y1',
+                outputs: 'palette'
+              },
+
+              {
+                filter: 'paletteuse',
+                options: { dither: 'sierra2' },
+                inputs: ['y2', 'palette']
+              }
+            ];
+
+            anim
+              .input(path.join(input, char, chars[char].patternFFMPEG))
+              .input(design)
+              .filterGraph(filters)
+              .on('error', (err) => {
+
+                consoleError('[%s] Error generating Gif', char);
+                cb(err);
+              })
+              .on('end', (stdout, stderr) => {
+
+                consoleLog('[%s] Gif generation complete', char);
+                cb(null, null);
+              })
+              .pipe(out);
+          };
+
+          // processGM();
+
+          processFFMPEG();
+
         }
       ], (err, result) => {
 

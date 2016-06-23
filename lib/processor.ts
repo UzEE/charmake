@@ -10,6 +10,7 @@ export interface ICharacterSequence {
 
   name: string;
   pattern: string;
+  patternFFMPEG: string;
   designFile: string;
   sequenceFiles: Array<string>;
 }
@@ -93,6 +94,7 @@ export class Processor {
           resolve({
             name: path.basename(directory),
             pattern: name + '*' + ext,
+            patternFFMPEG: name + '%0' + index.length + 'd' + ext,
             designFile: result[0] ? result[0] : null,
             sequenceFiles: result[1]
           });

@@ -146,7 +146,13 @@ export class Processor {
       let indexes = Object.keys(dictionary).map<number>(i => parseInt(i)).sort((a, b) => { return b - a });
 
       let getName = (item: IFileDictionaryItem, index: number) => {
-        return [item.filename, item.name + pad((min + index).toString(), indexStrLength, '0') + item.extension];
+
+        return [
+          item.filename,
+          item.name + pad((min + index).toString(), indexStrLength, '0') + item.extension,
+          item.name + pad((item.index - min).toString(), indexStrLength, '0') + item.extension,
+          item.name + pad(index.toString(), indexStrLength, '0') + item.extension,
+        ];
       };
 
       let i = 0;
@@ -155,14 +161,14 @@ export class Processor {
       for (; i < len; i++) {
 
         let fileDict = dictionary[indexes[i]];
-        let [filename, newName] = getName(fileDict, i);
+        let [firstFile, secondFile, first_newName, second_newName] = getName(fileDict, i);
 
-        let temp_newName = newName + '.bak';
+        let first_tempName = first_newName + '.bak';
+        let second_tempName = second_newName + '.bak';
 
         try {
-          fs.renameSync(path.join(directory, filename), path.join(directory, temp_newName));
-          fs.renameSync(path.join(directory, newName), path.join(directory, filename));
-          fs.renameSync(path.join(directory, temp_newName), path.join(directory, newName));
+          fs.renameSync(path.join(directory, firstFile), path.join(directory, second_tempName));
+          fs.renameSync(path.join(directory, secondFile), path.join(directory, first_tempName));
         }
 
         catch (err) {
@@ -170,38 +176,41 @@ export class Processor {
           reject(err);
           return;
         }
-
-        outList.push(path.join(directory, filename));
-        outList.push(path.join(directory, newName));
-
-        /*if (i + 1 >= max / 2) {
-
-          if (max % 2) {
-
-            fileDict = dictionary[indexes[i + 1]];
-            [filename, newName] = getName(fileDict, i + 1);
-
-            try {
-              fs.renameSync(path.join(directory, filename), path.join(directory, newName));
-            }
-
-            catch (err) {
-
-              reject(err);
-              return;
-            }
-
-            outList.push(path.join(directory, filename));
-            break;
-
-          } else { break; }
-        }*/
       }
 
       if (files.length % 2) {
 
         let fileDict = dictionary[indexes[i]];
-        let [filename, newName] = getName(fileDict, i);
+        let [firstFile, secondFile, first_newName, second_newName] = getName(fileDict, i);
+
+        try {
+          fs.renameSync(path.join(directory, firstFile), path.join(directory, first_newName) + '.bak');
+        }
+
+        catch (err) {
+
+          reject(err);
+          return;
+        }
+      }
+
+      let fileInfo = path.basename(files[0]).match(Processor.SequencePattern);
+      let [filename, name, index, ext] = fileInfo;
+
+      // second pass to renmae all the temp files
+      for (let i = 0, len = files.length; i < len; i++) {
+
+        let filename = name + pad(i.toString(), indexStrLength, '0') + ext;
+
+        try {
+          fs.renameSync(path.join(directory, filename + '.bak'), path.join(directory, filename));
+        }
+
+        catch (err) {
+
+          reject(err);
+          return;
+        }
 
         outList.push(path.join(directory, filename));
       }

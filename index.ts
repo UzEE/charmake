@@ -21,6 +21,7 @@ import * as util from 'util';
 import * as gm from 'gm';
 import * as async from 'async';
 import * as ffmpeg from 'fluent-ffmpeg';
+import * as _ from 'lodash';
 
 import * as updateNotifier from 'update-notifier';
 
@@ -97,6 +98,13 @@ let argv = yargs
     default: false,
     defaultDescription: 'Don\'t use GraphicsMagick by default.'
 
+  })
+  .option('framerate', {
+    alias: ['fps', 'f'],
+    type: 'number',
+    describe: 'Framerate to use for the output animation.',
+    default: 25,
+    defaultDescription: 'Run at 25 frames/second by default.'
   })
   .argv;
 
@@ -184,7 +192,9 @@ async.waterfall([
 
     let size = argv['size'] || util.format('%dx%d', width, height);
 
-    for (let char in chars) {
+    let vals = _.values(chars);
+
+    async.forEachOfSeries(chars, (character, char, eachCb) => {
 
       let outname = path.join(input, char + '.gif');
       let out = fs.createWriteStream(outname);
@@ -195,7 +205,7 @@ async.waterfall([
 
       async.waterfall([
 
-        (cb) => {
+        (waterfallCb) => {
 
           if (!size || size === '0x0') {
 
@@ -204,20 +214,20 @@ async.waterfall([
 
                 if (err) {
 
-                  cb(err);
+                  waterfallCb(err);
                   return;
                 }
 
                 size = util.format('%dx%d', dim.width, dim.height);
-                cb(null, size);
+                waterfallCb(null, size);
               });
 
           } else {
-            cb(null, size);
+            waterfallCb(null, size);
           }
         },
 
-        (size: string, cb) => {
+        (size: string, waterfallCb) => {
 
           consoleLog('Using size: %s', size);
 
@@ -263,11 +273,17 @@ async.waterfall([
             anim.stream('gif')
               .pipe(out);
 
-            cb(null, null);
+            waterfallCb(null, null);
           }
 
           // ffmpeg pipeline
           let processFFMPEG = () => {
+
+            consoleLog('Using %s as the processor library...', processor);
+
+            console.debug = (...args: Array<any>) => {
+              consoleLog.apply(this, args);
+            }
 
             let anim = new ffmpeg({ logger: console });
             let overlayInputs: Array<string> = [];
@@ -283,14 +299,21 @@ async.waterfall([
             let filters: Array<FfmpegComplexFilter> = [
 
               {
+                filter: 'color',
+                options: { c: 'white', s: size },
+                outputs: 'col'
+              },
+
+              {
                 filter: 'fps',
                 options: 25,
+                inputs: ['0:v'],
                 outputs: 'fps'
               },
 
               {
                 filter: 'scale',
-                options: { w: 512, h: -1, flags: 'lanczos' },
+                options: { w: size.substring(0, size.indexOf('x')), h: size.substring(size.indexOf('x') + 1), flags: 'lanczos' },
                 inputs: 'fps',
                 outputs: 'scaled'
               },
@@ -317,11 +340,20 @@ async.waterfall([
               },
 
               {
+                filter: 'overlay',
+                options: { x: 0, y: 0 },
+                inputs: ['col', 'y2'],
+                outputs: 'colored'
+              },
+
+              {
                 filter: 'paletteuse',
                 options: { dither: 'sierra2' },
-                inputs: ['y2', 'palette']
+                inputs: ['colored', 'palette']
               }
             ];
+
+            let time = chars[char].sequenceFiles.length / argv['framerate'];
 
             anim
               .input(path.join(input, char, chars[char].patternFFMPEG))
@@ -330,14 +362,15 @@ async.waterfall([
               .on('error', (err) => {
 
                 consoleError('[%s] Error generating Gif', char);
-                cb(err);
+                waterfallCb(err);
               })
               .on('end', (stdout, stderr) => {
 
                 consoleLog('[%s] Gif generation complete', char);
-                cb(null, null);
+                waterfallCb(null, null);
               })
-              .pipe(out);
+              .duration(time)
+              .save(outname);
           };
 
           if (processor === 'gm') {
@@ -351,11 +384,21 @@ async.waterfall([
         }
       ], (err, result) => {
 
-        if (++count >= Object.keys(chars).length) {
+        /*if (++count >= Object.keys(chars).length) {
           cb(null, chars);
-        }
+        }*/
+
+        eachCb(null);
       });
-    }
+
+    }, (err) => {
+
+      if (err) {
+        return cb(err, null);
+      }
+
+      cb(null, chars);
+    });
   }
 
 ], (err, results) => {

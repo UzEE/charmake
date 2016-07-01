@@ -174,8 +174,15 @@ async.waterfall([
 
       catch (err) {
 
-        cb(err, null);
-        return;
+        if (err.designMissing) {
+          consoleError(err.message);
+        }
+
+        if (err.break) {
+
+          cb(err, null);
+          return;
+        }
       }
     }
 
@@ -197,11 +204,10 @@ async.waterfall([
     async.forEachOfSeries(chars, (character, char, eachCb) => {
 
       let outname = path.join(input, char + '.gif');
-      let out = fs.createWriteStream(outname);
 
       let design = path.join(input, char, chars[char].designFile);
 
-      consoleLog('Creating %s', outname);
+      consoleLog('\nCreating %s', outname);
 
       async.waterfall([
 
@@ -235,6 +241,7 @@ async.waterfall([
           let processGM = () => {
 
             let anim = gm();
+            let out = fs.createWriteStream(outname);
 
             if (design.indexOf('under') > 0) {
 
@@ -285,8 +292,11 @@ async.waterfall([
               consoleLog.apply(this, args);
             }
 
-            let anim = new ffmpeg({ logger: console });
+            let palette = new ffmpeg({ logger: console });
             let overlayInputs: Array<string> = [];
+
+            let paletteName = path.join(input, char, 'palette.png');
+            //let palette = fs.createWriteStream(paletteName);
 
             if (design.indexOf('under') > 0) {
 
@@ -296,7 +306,7 @@ async.waterfall([
               overlayInputs = ['scaled', '1:v']
             }
 
-            let filters: Array<FfmpegComplexFilter> = [
+            /*let filters: Array<FfmpegComplexFilter> = [
 
               {
                 filter: 'color',
@@ -351,26 +361,122 @@ async.waterfall([
                 options: { dither: 'sierra2' },
                 inputs: ['colored', 'palette']
               }
+            ];*/
+
+            let filters: Array<FfmpegComplexFilter> = [
+
+              {
+                filter: 'fps',
+                options: 25,
+                inputs: ['0:v'],
+                outputs: 'fps'
+              },
+
+              {
+                filter: 'scale',
+                options: { w: size.substring(0, size.indexOf('x')), h: size.substring(size.indexOf('x') + 1), flags: 'lanczos' },
+                inputs: 'fps',
+                outputs: 'scaled'
+              },
+
+              {
+                filter: 'overlay',
+                options: { x: 0, y: 0 },
+                inputs: overlayInputs,
+                outputs: 'overlayed'
+              },
+
+              {
+                filter: 'palettegen',
+                options: { stats_mode: 'full' },
+                inputs: 'overlayed'
+              }
             ];
 
             let time = chars[char].sequenceFiles.length / argv['framerate'];
 
-            anim
+            consoleLog('Total frames: %d\nUsing framerate: %d fps\nGIF Duration: %ds', chars[char].sequenceFiles.length, argv['framerate'], time);
+
+            palette
               .input(path.join(input, char, chars[char].patternFFMPEG))
               .input(design)
               .filterGraph(filters)
               .on('error', (err) => {
 
-                consoleError('[%s] Error generating Gif', char);
+                consoleError('[%s] Error generating Palette\n', char);
+                console.log(err);
                 waterfallCb(err);
               })
               .on('end', (stdout, stderr) => {
 
-                consoleLog('[%s] Gif generation complete', char);
-                waterfallCb(null, null);
+                consoleLog('[%s] Palette generation complete', char);
+
+                let gifFlters: Array<FfmpegComplexFilter> = [
+
+                  {
+                    filter: 'color',
+                    options: { c: 'white', s: size },
+                    outputs: 'col'
+                  },
+
+                  {
+                    filter: 'fps',
+                    options: 25,
+                    inputs: ['0:v'],
+                    outputs: 'fps'
+                  },
+
+                  {
+                    filter: 'scale',
+                    options: { w: size.substring(0, size.indexOf('x')), h: size.substring(size.indexOf('x') + 1), flags: 'lanczos' },
+                    inputs: 'fps',
+                    outputs: 'scaled'
+                  },
+
+                  {
+                    filter: 'overlay',
+                    options: { x: 0, y: 0 },
+                    inputs: overlayInputs,
+                    outputs: 'overlayed'
+                  },
+
+                  {
+                    filter: 'overlay',
+                    options: { x: 0, y: 0 },
+                    inputs: ['col', 'overlayed'],
+                    outputs: 'colored'
+                  },
+
+                  {
+                    filter: 'paletteuse',
+                    options: { dither: 'sierra2' },
+                    inputs: ['colored', '2:v']
+                  }
+                ];
+
+                consoleLog('Using palette: %s', paletteName);
+
+                let anim = new ffmpeg({ logger: console });
+
+                anim
+                  .input(path.join(input, char, chars[char].patternFFMPEG))
+                  .input(design)
+                  .input(paletteName)
+                  .filterGraph(gifFlters)
+                  .on('error', (err) => {
+
+                    consoleError('[%s] Error generating GIF\n', char);
+                    waterfallCb(err);
+                  })
+                  .on('end', (stdout, stderr) => {
+
+                    consoleLog('[%s] GIF generation complete\n', char);
+                    waterfallCb(null, null);
+                  })
+                  .duration(time)
+                  .save(outname);
               })
-              .duration(time)
-              .save(outname);
+              .save(paletteName);
           };
 
           if (processor === 'gm') {

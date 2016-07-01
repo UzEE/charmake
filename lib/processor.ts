@@ -51,7 +51,12 @@ export class Processor {
               if (exists) {
                 designResolve('design.over.png');
               } else {
-                designReject(new Error(util.format('Error [%s]: design.over.png or design.under.png doesn\'t exist', directory)));
+
+                let error: any = new Error(util.format('Error [%s]: design.over.png or design.under.png doesn\'t exist', directory));
+                error.designMissing = true;
+                error.break = false;
+
+                designReject(error);
               }
             });
           }
@@ -75,7 +80,11 @@ export class Processor {
 
           if (!files.length) {
 
-            seqReject(new Error(util.format('Error [%s]: No valid animation sequence exists', directory)));
+            let error:any = new Error(util.format('Error [%s]: No valid animation sequence exists', directory));
+            error.invalidSequence = true;
+            error.break = false;
+
+            seqReject(error);
             return;
           }
 

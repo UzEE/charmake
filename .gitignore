@@ -9,6 +9,7 @@ typings/
 bin/
 dist/
 dev/
+data.csv
 data/
 backup/
 character/

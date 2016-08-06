@@ -25,6 +25,7 @@
   "license": "MIT",
   "dependencies": {
     "async": "^2.0.0-rc.6",
+    "csv-parse": "^1.1.7",
     "fluent-ffmpeg": "^2.1.0",
     "gm": "^1.22.0",
     "lodash": "^4.13.1",

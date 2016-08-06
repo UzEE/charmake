@@ -6,13 +6,16 @@ import * as util from 'util';
 
 import pad = require('pad-left');
 
+import { IDataFileRecord } from '../index';
+
 export interface ICharacterSequence {
 
-  name: string;
+  animation: string;
   pattern: string;
   patternFFMPEG: string;
   designFile: string;
   sequenceFiles: Array<string>;
+  data: IDataFileRecord;
 }
 
 interface IFileDictionaryItem {
@@ -31,34 +34,28 @@ export class Processor {
 
   static SequencePattern = /^([a-z_\-]+)([0-9]+)(\.[a-z]+)$/i;
 
-  static async BuildCharacterSequenceAsync(directory: string): Promise<ICharacterSequence> {
+  static async BuildCharacterSequenceAsync(inputPath: string, record: IDataFileRecord): Promise<ICharacterSequence> {
 
-    directory = path.normalize(directory);
+    let directory = path.normalize(path.join(inputPath, record.animation));
 
     return new Promise<ICharacterSequence>((resolve, reject) => {
 
       // check if design.over.png or design.under.png exists
       let designExists = new Promise<string>((designResolve, designReject) => {
 
-        fs.exists(path.join(directory, 'design.under.png'), (exists) => {
+        const designFile = path.join(inputPath, '..', 'design', record.design);
+
+        fs.exists(designFile, (exists) => {
 
           if (exists) {
-            designResolve('design.under.png');
+            designResolve(designFile);
           } else {
 
-            fs.exists(path.join(directory, 'design.over.png'), (exists) => {
+            let error: any = new Error(util.format('Error [%s]: Design file %s doesn\'t exist', directory, designFile));
+            error.designMissing = true;
+            error.break = false;
 
-              if (exists) {
-                designResolve('design.over.png');
-              } else {
-
-                let error: any = new Error(util.format('Error [%s]: design.over.png or design.under.png doesn\'t exist', directory));
-                error.designMissing = true;
-                error.break = false;
-
-                designReject(error);
-              }
-            });
+            designReject(error);
           }
         });
       });
@@ -101,11 +98,12 @@ export class Processor {
           let [filename, name, index, ext] = res;
 
           resolve({
-            name: path.basename(directory),
+            animation: path.basename(directory),
             pattern: name + '*' + ext,
             patternFFMPEG: name + '%0' + index.length + 'd' + ext,
             designFile: result[0] ? result[0] : null,
-            sequenceFiles: result[1]
+            sequenceFiles: result[1],
+            data: record
           });
         })
         .catch(reason => {

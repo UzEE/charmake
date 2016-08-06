@@ -79,13 +79,13 @@ Most options use sane defaults so you should be good to go without specifying an
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| --input-dir, -i | Directory Path | _Required_ | The path to the character directory containing all the animation directories |
-| --datafile, -d, --df | Data File Path | _Required_ | Path to the CSV data file for the character |
-| --output-dir, -o | Output Directory Path | Input Directory | Path to the Directory in which to output the generated character files |
-| --width, -w | Number | Design file Width | Width of the output in pixels. Will default to the size of overlay design file if omitted. |
-| --height, -h | Number | Same as Width | Height of the output in pixels. If no `--height` is given but `--width` is, it's value will be used for `--height` as well, resulting in a square image. Otherwise, the size of overlay design file is used if omitted. |
-| --size, -s | String |  | Output dimensions of the format <width>x<height> (e.g 512x512). This value will take precedence over `--width` and `--height` if given. Defaults to the size of design overlay file if `--width` and `--height` are also omitted. |
-| --framerate, --fps, -f | Number | 25 | Framerate to use for the output animation. Runs at 25 frames/second by default. |
+| -i, --input-character | Directory Path | _Required_ | The path to the character directory containing all the animation directories |
+| -d, --df, --datafile | Data File Path | _Required_ | Path to the CSV data file for the character |
+| -o, --output-dir | Output Directory Path | Input Directory | Path to the Directory in which to output the generated character files |
+| -w, --width | Number | Design file Width | Width of the output in pixels. Will default to the size of overlay design file if omitted. |
+| -h, --height | Number | Same as Width | Height of the output in pixels. If no `--height` is given but `--width` is, it's value will be used for `--height` as well, resulting in a square image. Otherwise, the size of overlay design file is used if omitted. |
+| -s, --size | String |  | Output dimensions of the format <width>x<height> (e.g 512x512). This value will take precedence over `--width` and `--height` if given. Defaults to the size of design overlay file if `--width` and `--height` are also omitted. |
+| -f, --fps, --framerate | Number | 25 | Framerate to use for the output animation. Runs at 25 frames/second by default. |
 | --verbose | Boolean | False | Print debug logs to stdout |
 | --version | | | Shows version information |
 | --help | | | Shows detailed help about the command utility |

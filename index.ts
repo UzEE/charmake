@@ -14,6 +14,22 @@ interface IFileDictionary {
   [index: number]: IFileDictionaryItem;
 }
 
+interface ICharacterSequenceMap {
+  [character: string]: ICharacterSequence;
+}
+
+export interface IDataFileRecord {
+
+  animation: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  design: string;
+  overlay: boolean;
+  framerate: number;
+}
+
 import * as yargs from 'yargs';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -49,14 +65,13 @@ let argv = yargs
 
     alias: ['d', 'df'],
     type: 'string',
-    describe: 'Path the CSV data file for the character',
-    default: null,
-    defaultDescription: 'Will not be used if command line arguments are passed instead'
+    describe: 'Path to the CSV data file for the character',
+    demand: true
 
   }).option('output-dir', {
     alias: 'o',
     type: 'string',
-    describe: 'Path to the Directory to output the generated character files',
+    describe: 'Path to the Directory in which to output the generated character files',
     default: null
 
   }).option('width', {
@@ -64,59 +79,40 @@ let argv = yargs
     type: 'number',
     describe: 'Width of the output in pixels.',
     default: null,
-    defaultDescription: 'Will default to the size of `design.png` if omitted.'
+    defaultDescription: 'Will default to the size of overlay design file if omitted.'
 
   }).option('height', {
     alias: 'h',
     type: 'number',
     describe: 'Height of the output in pixels.',
     default: null,
-    defaultDescription: 'If --width is given, it\'s value will be used for --height as well, resulting in a square image. Otherwise, size of `design.png` will be used.'
+    defaultDescription: 'If no --height is given but --width is, it\'s value will be used for --height as well, resulting in a square image. Otherwise, the size of overlay design file is used if omitted.'
 
   }).option('size', {
     alias: 's',
     type: 'string',
     describe: 'Output dimensions of the format <width>x<height> (e.g 512x512). This value will take precedence over --width and --height if given.',
     default: null,
-    defaultDescription: 'Defaults to the size of `design.png` if ommited.'
+    defaultDescription: 'Defaults to the size of design overlay file if --width and --height are also omitted.'
 
-  }).option('verbose', {
-    type: 'boolean',
-    describe: 'Print output to stdout',
-    default: false
-
-  })
-  .option('framerate', {
+  }).option('framerate', {
     alias: ['fps', 'f'],
     type: 'number',
     describe: 'Framerate to use for the output animation.',
     default: 25,
     defaultDescription: 'Run at 25 frames/second by default.'
   })
+  .option('verbose', {
+    type: 'boolean',
+    describe: 'Print debug logs to stdout.',
+    default: false
+
+  })
   .argv;
 
 const input = path.normalize(argv['i']);
 const output = argv['o'] ? path.normalize(argv['o']) : input;
 const dataFile = argv['df'] ? path.normalize(argv['df']) : null;
-
-// determine which Gif processor to use
-const processor = (argv['gm'] || argv['processor'] === 'gm') ? 'gm' : 'ffmpeg';
-
-interface ICharacterSequenceMap {
-  [character: string]: ICharacterSequence;
-}
-
-export interface IDataFileRecord {
-
-  animation: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  design: string;
-  overlay: boolean;
-  framerate: number;
-}
 
 /**
  * A helper function to write to stdout
@@ -287,7 +283,6 @@ async.waterfall([
         (size: string, waterfallCb) => {
 
           consoleLog('Using size: %s', size);
-          consoleLog('Using %s as the processor library...', processor);
 
           console.debug = (...args: Array<any>) => {
             consoleLog.apply(this, args);

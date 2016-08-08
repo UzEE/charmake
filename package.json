@@ -34,6 +34,8 @@
     "yargs": "^4.7.0"
   },
   "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-line-ending-corrector": "^1.0.1",
     "typescript": "^1.8.10"
   },
   "repository": {

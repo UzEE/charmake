@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "csv-parse": "registry:npm/csv-parse#1.0.2+20160405213407",
+    "gulp": "registry:npm/gulp#4.0.0-alpha.2+20160723033700",
     "lodash": "registry:npm/lodash#4.0.0+20160416211519",
     "pad-left": "registry:npm/pad-left#2.0.0+20160211003958",
     "update-notifier": "registry:npm/update-notifier#0.6.0+20160211003958",

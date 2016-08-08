@@ -12,6 +12,7 @@ data/
 backup/
 character/
 lib/
+src/
 .eslintrc
 index.ts
 tsconfig.json

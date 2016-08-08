@@ -9,8 +9,11 @@
   },
   "globalDependencies": {
     "async": "registry:dt/async#1.4.2+20160602152629",
+    "chokidar": "registry:dt/chokidar#1.4.3+20160316155526",
     "fluent-ffmpeg": "github:mattvperry/typed-fluent-ffmpeg",
     "gm": "registry:dt/gm#0.0.0+20160328142802",
-    "node": "registry:dt/node#6.0.0+20160602155235"
+    "node": "registry:dt/node#6.0.0+20160602155235",
+    "undertaker": "registry:dt/undertaker#0.12.0+20160316155526",
+    "vinyl-fs": "registry:dt/vinyl-fs#0.0.0+20160317120654"
   }
 }

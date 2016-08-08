@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-/// <reference path="./typings/index.d.ts" />
+/// <reference path="../typings/index.d.ts" />
 
 interface IFileDictionaryItem {
 
